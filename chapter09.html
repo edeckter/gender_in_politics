@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 Dynamic Bar Chart with Varying Number of Bars</title>
+        <!--Use the line below to link to the latest version of D3-->
+        <!--<script src="https://d3js.org/d3.v5.min.js"></script>-->
+        <script type="text/javascript" src="d3.js"></script>
+    </head>
+    <body>
+    <p>Click on me to update the data!</p>
+        <script type="text/javascript">
+            var h=500; //svg height
+            var w=500; //svg width
+            var xPadding=60; //x-graph padding
+            var yPadding=30; //y-graph padding
+            
+            /*Bar chart*/
+            var dataset=[10,25,100,42,50,75,12]
+                        
+            //Create svg object for barchart
+            var svg=d3.select("body")
+                      .append("svg")
+                      .attr("width",w)
+                      .attr("height",h)
+                      .attr("class","plot")
+                      .attr("id","bar chart");
+                      
+            //Scaling function for categories
+            var widthScale=d3.scaleBand()
+                             .domain(d3.range(dataset.length))
+                             .rangeRound([xPadding,w-xPadding])
+                             .paddingInner(0.05);
+                      
+            //Scaling function for bars
+            var heightScale=d3.scaleLinear()
+                              .domain([0,d3.max(dataset)])
+                              .nice()
+                              .range([h-yPadding,yPadding]);
+            
+            //Define bars
+            svg.selectAll("rect")
+                .data(dataset)
+                .enter()
+                .append("rect")
+                .attr("class","bar")
+                .attr("x", function(d,i) {return widthScale(i);})
+                .attr("y", function(d) {return heightScale(d);})
+                .attr("width", widthScale.bandwidth())
+                .attr("height", function(d) {return h-(heightScale(d)+yPadding);})
+                .attr("fill",function(d) {return "rgb(0,0,"+Math.round(d*10)+")";});
+                
+            //Labels
+            svg.selectAll("text")
+                .data(dataset)
+                .enter()
+                .append("text")
+                .attr("class","label")
+                .attr("x", function(d,i) {return widthScale(i)+widthScale.bandwidth()/2;})
+                .attr("y", function(d) {if (d>5) {return heightScale(d)+20;} else {return heightScale(d)-15;}})
+                .text(function(d) {return d;})
+                .attr("fill", function(d) {if (d>5) {return "white";} else {return "black";}})
+                .attr("text-anchor","middle");
+                
+            //Create y-axis
+            var barAxis=d3.axisLeft()
+                          .scale(heightScale);            
+            
+            //Display y-axis
+            svg.append("g")
+               .attr("class","y axis")
+               .attr("transform","translate("+xPadding+",0)")
+               .call(barAxis);
+               
+            //Update data
+            d3.select("p")
+               .on("click", function() {
+                    //Create random data for updates
+                    var minBars=4;
+                    var maxBars=10;
+                    var maxValue=50;
+                    var numValue=Math.floor(Math.random()*(maxBars-minBars+1))+minBars;
+                                        
+                    dataset=[];
+                    for (var i=0; i<numValue; i++) {
+                        var newNumber=Math.floor(Math.random()*maxValue);
+                        dataset.push(newNumber);
+                    }
+                    
+                    //Update width and height scale domain
+                    widthScale.domain(d3.range(dataset.length));
+                    heightScale.domain([0,d3.max(dataset)]).nice();
+                    
+                    //Clear bars and labels and axis
+                    svg.selectAll("rect")
+                       .remove();
+                    svg.selectAll("text")
+                       .remove();
+                    svg.selectAll(".y.axis")
+                       .remove();
+                    
+                    //Create new bars based on updated data
+                    svg.selectAll("rect")
+                       .data(dataset)
+                       .enter()
+                       .append("rect")
+                       .attr("class","bar")
+                       .attr("x", function(d,i) {return widthScale(i);})
+                       .attr("y", function(d) {return heightScale(d);})
+                       .attr("width", widthScale.bandwidth())
+                       .attr("height", function(d) {return h-(heightScale(d)+yPadding);})
+                       .attr("fill",function(d) {return "rgb(0,0,"+Math.round(d*10)+")";});
+                    
+                       
+                    //Create new labels based on updated data
+                    svg.selectAll("text")
+                       .data(dataset)
+                       .enter()
+                       .append("text")
+                       .attr("class","label")
+                       .attr("x", function(d,i) {return widthScale(i)+widthScale.bandwidth()/2;})
+                       .attr("y", function(d) {if (d>5) {return heightScale(d)+20;} else {return heightScale(d)-15;}})
+                       .text(function(d) {return d;})
+                       .attr("fill", function(d) {if (d>5) {return "white";} else {return "black";}})
+                       .attr("text-anchor","middle");                     
+                       
+                    //Display new y-axis
+                    svg.append("g")
+                       .attr("class","y axis")
+                       .attr("transform","translate("+xPadding+",0)")
+                       .call(barAxis);
+                                
+            });
+   
+        </script>
+    </body>
+</html>

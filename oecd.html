@@ -41,12 +41,9 @@
                              .translate([w/2,h/2])
                              .scale([175]);
                                             
-            //Color scales
-            var blues=d3.scaleQuantile()
-                         .range(d3.schemeBlues[9]);
-                        
-            var reds=d3.scaleQuantile()
-                       .range(d3.schemeReds[9]);         
+            //Color scales                      
+            var colorScale=d3.scaleQuantile()
+                       .range(d3.schemeBlues[9]);         
             
             //Load data
             d3.csv("Women Legislators.csv").then(function(women) {
@@ -64,7 +61,7 @@
                 };
                 
                 //Set initial domain for women variable
-                reds.domain(women_domain);          
+                colorScale.domain(women_domain);          
 
                 //Load world map GeoJSON file 
                 d3.json("ne_50m_admin_0_countries.geojson").then(function(world) {
@@ -138,16 +135,17 @@
                     //Draw path using projection
                     var path=d3.geoPath(projection);
                         
-                    //Draw map and load data
+                    //Draw map
                     map.selectAll("path")
                         .data(world.features)
                         .enter()
                         .append("path")
                         .attr("d",path)
+                        .style("stroke","#585858")
                         .style("fill",
                             function(d) {
                                 var display_value=d.properties.Women;
-                                if(display_value) {return reds(display_value);
+                                if(display_value) {return colorScale(display_value);
                                 } else {return "#ccc";}
                                 
                             })
@@ -155,40 +153,66 @@
                         .text(function(d) {
                             var display_value=d.properties.Women;
                             return d.properties.ADMIN+" "+display_value;});
+                            
+                    //Draw legend
+                    var legend=svg1.append("g")
+                                   .attr("class","legend");
+                                       
+                    legend.selectAll("rect")
+                          .data(colorScale.range())
+                          .enter()
+                          .append("rect")
+                          .attr("x",function(d,i) {return i*(w-2*xPadding)/colorScale.range().length;})
+                          .attr("y",yPadding/4)
+                          .attr("width",yPadding/2)
+                          .attr("height",yPadding/2)
+                          .style("stroke","#585858")
+                          .style("fill",function(d) {return d;});
+                            
+                    var max=d3.max(colorScale.domain());
+                    breaks=colorScale.quantiles().concat(max);
+                    legend.selectAll("text")
+                          .data(breaks)
+                          .enter()
+                          .append("text")
+                          .attr("x",function(d,i) {return yPadding/2+5+i*(w-2*xPadding)/colorScale.range().length;})
+                          .attr("y",yPadding/2)
+                          .attr("text-anchor","start")
+                          .attr("dominant-baseline","central")
+                          .text(function(d) {return "≤"+Math.round(d,0);});
                     
                     var updateData=function(d) {
                         var selected=d3.select("select#map_control").property("value");
-                        
-                                             
-                        //Update colors and tooltips
+             
+                        //Add/update colors and tooltips
                         map.selectAll("path")
                            .style("fill",
                             function(d) {
                                 switch(selected) {
                                     case "Unpaid Work Performed by Men (Minutes per Day)":
-                                        reds.domain(men_domain);
+                                        colorScale.domain(men_domain);
                                         display_value=d.properties.Men;
                                         break;
                                     case "Unpaid Work Performed by Women (Minutes per Day)":
-                                        reds.domain(women_domain);
+                                        colorScale.domain(women_domain);
                                         display_value=d.properties.Women;
                                         break;
                                     case "Difference in Unpaid Work Performed by Women and Men (Minutes per Day)":
-                                        reds.domain(diff_domain);
+                                        colorScale.domain(diff_domain);
                                         display_value=d.properties.Diff;
                                         break;
                                     case "% of Unpaid Work Performed by Women":
-                                        reds.domain(percent_domain);
+                                        colorScale.domain(percent_domain);
                                         display_value=d.properties.PercentWomen;
                                         break;
                                     case "% of Parliamentarians That are Women":
-                                        reds.domain(percent_female);
+                                        colorScale.domain(percent_female);
                                         display_value=d.properties.Legislators;
                                         break;
                                     default: break;
                                 };
                                 
-                                if(display_value) {return reds(display_value);
+                                if(display_value) {return colorScale(display_value);
                                 } else {return "#ccc";}
                                 
                             })
@@ -207,15 +231,24 @@
                                     case "% of Unpaid Work Performed by Women":
                                         display_value=formatPercent(d.properties.PercentWomen);
                                         break;
-                                    case "% of Parliamentarians That are Female":
+                                    case "% of Parliamentarians That are Women":
                                         display_value=formatPercent(d.properties.Legislators);
                                         break;
                                     default: break;
                                 };
                                 
                                 return d.properties.ADMIN+" "+display_value;})
+                            
+                            //Update legend values
+                            var max=d3.max(colorScale.domain());
+                            breaks=colorScale.quantiles().concat(max);
+                            legend.selectAll("text")
+                                  .data(breaks)
+                                  .text(function(d) {
+                                    if (selected=="% of Unpaid Work Performed by Women" || selected=="% of Parliamentarians That are Women")
+                                        {return "≤"+formatPercent(d);} else {return "≤"+Math.round(d,0);}
+                                  });
                         };
-
                 });
             });
             
@@ -241,10 +274,11 @@
                 var menu2=d3.select("div.drop-down")
                             .append("select")
                             .attr("id","chart_control")
-                            .on("change",function() {updateData();});
+                            .on("change",function() {sortBars();});
 
-                 menu2.selectAll("option")
-                     .data(["Sort by Unpaid Work","Sort by Female Legislators"])
+                var sortData=["Sort by Unpaid Work","Sort by Female Legislators","Sort by Country"];
+                menu2.selectAll("option")
+                     .data(sortData)
                      .enter()
                      .append("option")
                       .text(function(d) {return d;});
@@ -363,7 +397,7 @@
                     .attr("y2",bh-yPadding)
                     .style("stroke","white");
                     
-                var updateData=function() {
+                var sortBars=function() {
                     var sort_order=d3.select("select#chart_control").property("value");
                     
                     if (sort_order=="Sort by Female Legislators") {

@@ -15,13 +15,14 @@
         <p>Around the world, women are still doing the more than half of the unpaid household work.<br>
         Attitudes about division of labor in the private sphere are often carried over into the public sphere.  In countries
         where there is a more equitable division of household labor, there is a noticeable larger proportion of female legislators.</p>
-        <div class="drop-down"></div>
+        <div class="drop-down" id="map"></div>
         <div class="section" id="viz1"></div>
+        <div class="drop-down" id="chart">Sort by: </div>
         <div class ="section" id="viz2"></div>
         <!--<p id="menu"></p>-->
         <script type="text/javascript">
             var w=1000;
-            var h=600;
+            var h=750;
             var xPadding=50;
             var yPadding=50;
             
@@ -109,7 +110,7 @@
                                  .on("drag", dragging);
                                  
                     //Create drop-down menu
-                    var menu=d3.select("div.drop-down")
+                    var menu=d3.select("#map")
                                .append("select")
                                .attr("id","map_control")
                                .on("change",function() {updateData();});
@@ -255,8 +256,6 @@
             //Bar chart
             var bw=750;
             var bh=750;
-            var yPadding=50;
-            var xPadding=50;
             
             var svg2=d3.select("#viz2")
                        .append("svg")
@@ -271,12 +270,12 @@
                 });
 
                 //Create drop-down menu
-                var menu2=d3.select("div.drop-down")
+                var menu2=d3.select("#chart")
                             .append("select")
                             .attr("id","chart_control")
                             .on("change",function() {sortBars();});
 
-                var sortData=["Sort by Unpaid Work","Sort by Female Legislators","Sort by Country"];
+                var sortData=["% of Female Legislators","% of Unpaid Work by Women","Country"];
                 menu2.selectAll("option")
                      .data(sortData)
                      .enter()
@@ -400,7 +399,7 @@
                 var sortBars=function() {
                     var sort_order=d3.select("select#chart_control").property("value");
                     
-                    if (sort_order=="Sort by Female Legislators") {
+                    if (sort_order=="% of Female Legislators") {
                         labor.selectAll("rect")
                              .sort(function(a,b) {
                                 return d3.descending(b.FemaleParlimentarians,a.FemaleParlimentarians);})
@@ -435,7 +434,7 @@
                               .transition()
                               .duration(1000)
                               .attr("y",function(d,i) {return heightScale(i)+heightScale.bandwidth()/2;});
-                    } else {
+                    } else if (sort_order=="% of Unpaid Work by Women") {
                         labor.selectAll("rect")
                              .sort(function(a,b) {
                                 return d3.descending(b.PercentWomen,a.PercentWomen);})
@@ -470,9 +469,44 @@
                               .transition()
                               .duration(1000)
                               .attr("y",function(d,i) {return heightScale(i)+heightScale.bandwidth()/2;});
-                    }
+                    } else if (sort_order=="Country") {
+                        labor.selectAll("rect")
+                             .sort(function(a,b) {
+                                return d3.ascending(b.Country,a.Country);})
+                             .transition()
+                             .duration(1000)
+                             .attr("y",function(d,i) {return heightScale(i);});
+                          
+                        labor.selectAll("text")
+                             .sort(function(a,b) {
+                                return d3.ascending(b.Country,a.Country);})
+                             .transition()
+                             .duration(1000)
+                             .attr("y",function(d,i) {return heightScale(i)+heightScale.bandwidth()/2;});
+                             
+                        legislators.selectAll("rect")
+                                   .sort(function(a,b) {
+                                        return d3.ascending(b.Country,a.Country);})
+                                    .transition()
+                                    .duration(1000)
+                                    .attr("y",function(d,i) {return heightScale(i);});
+                                    
+                        legislators.selectAll("text")
+                                   .sort(function(a,b) {
+                                        return d3.ascending(b.Country,a.Country);})
+                                   .transition()
+                                   .duration(1000)
+                                   .attr("y",function(d,i) {return heightScale(i)+heightScale.bandwidth()/2;});
+                                   
+                        y_axis.selectAll("text")
+                              .sort(function(a,b) {
+                                        return d3.ascending(b.Country,a.Country);})
+                              .transition()
+                              .duration(1000)
+                              .attr("y",function(d,i) {return heightScale(i)+heightScale.bandwidth()/2;});
+
+                    };
                 };
-                
             });
                 
         </script

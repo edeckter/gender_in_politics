@@ -1,7 +1,10 @@
+## OECD Data
+
+Data on map and bar chart from the Organization for Ecomomic Cooperation and Development (OECD). See "References.txt" for exact URLs where data were obtained. All OECD data subject to use and restrictions as specified by the OECD terms and conditions: http://www.oecd.org/termsandconditions/.
+
+## GeoData
 Geodata [data package][datapackage] providing geojson polygons for all the world's countries.
 Perfect for use in apps and visualizations.
-
-## Data
 
 The data comes from [Natural Earth][naturalearth], a community effort to make visually pleasing, well-crafted maps with cartography or GIS software at small scale.
 

@@ -336,10 +336,18 @@
                                         display_value=d.properties.Diff;
                                         break;
                                     case "% of Unpaid Work Performed by Women":
-                                        display_value=formatPercent(d.properties.PercentWomen);
+                                        if (typeof d.properties.PercentWomen=='undefined') {
+                                            display_value='Undefined';
+                                        } else {
+                                            display_value=formatPercent(d.properties.PercentWomen);
+                                        }
                                         break;
                                     case "% of Parliamentarians That are Women":
-                                        display_value=formatPercent(d.properties.Legislators);
+                                        if (typeof d.properties.Legislators=='undefined') {
+                                            display_value='Undefined';
+                                        } else {
+                                            display_value=formatPercent(d.properties.Legislators);
+                                        }
                                         break;
                                     default: break;
                                 };
